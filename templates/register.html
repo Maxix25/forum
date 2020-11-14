@@ -1,37 +1,28 @@
-<!DOCTYPE html>
-<html>
-<head>
-	<title>Register</title>
-	<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/login.css') }}">
-</head>
-<body>
+{% extends "layout.html" %}
 
-{% for category, message in get_flashed_messages(with_categories = true) %}
-	{% if category == "warning-error" %}
-		<div class="warning-error">Warning: {{ message }}</div>
-	{% endif %}
+{% set title='Register' %}
 
-	{% if category == "alert-error" %}
-		<div class="alert-error">Error: {{ message }}</div>
-	{% endif %}
-	{% if category == "success" %}
-		<div class="success">Success!: {{ message }}</div>
-	{% endif %}
-{% endfor %}
-
-	  <div class="wrapper fadeInDown">
-	<div id="formContent">
-	  <!-- Tabs Titles -->
-
-	  <!-- Login Form -->
-	  <form action="#" method="post">
-		<input type="text" class="fadeIn second" name="username" placeholder="Username">
-		<input type="password" class="fadeIn third" name="password" placeholder="Password">
-		<input type="password" class="fadeIn forth" name="password_confirm" placeholder="Confirm Password">
-		<input type="submit" class="fadeIn fourth" value="Register">
-	  </form>
-	</div>
-  </div>	
-
-</body>
-</html>
+{% block content %}
+  {% for category, message in get_flashed_messages(with_categories = true) %}
+    {% if category == "warning-error" %}
+      <div class="warning-error">Warning: {{ message }}</div>
+    {% endif %}
+    {% if category == "alert-error" %}
+      <div class="alert-error">Error: {{ message }}</div>
+    {% endif %}
+    {% if category == "success" %}
+      <div class="success">Success!: {{ message }}</div>
+    {% endif %}
+  {% endfor %}
+  <div class="form-box shadow-md hover:shadow-xl transition-all duration-500 ease-in-out top p-8">
+    <!-- Registration Form -->
+    <form class="flex flex-col items-center" action="#" method="post">
+        <h1 class="text-2xl text-blue-600 font-bold mb-5">Create Account</h1>
+        <input type="text" class="my-2 rounded-md outline-none bg-gray-200 p-1 px-3" name="username" placeholder="Username">
+        <input type="password" class="my-2 rounded-md outline-none bg-gray-200 p-1 px-3" name="password" placeholder="Password">
+        <input type="password" class="my-2 rounded-md outline-none bg-gray-200 p-1 px-3" name="password_confirm" placeholder="Confirm Password">
+        <input type="submit" class="my-2 rounded outline-none mt-4 py-1 px-5 border-b-4" value="Register">
+        <a href="{{ url_for('login') }}" class="text-xs mt-3 text-gray-600 hover:text-gray-900">Already have an account? Click to login</a>
+    </form>
+  </div>
+{% endblock content %}

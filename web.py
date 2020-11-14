@@ -12,11 +12,8 @@ def index():
 	return render_template("index.html")
 
 
-
 @app.route("/register", methods = ["POST", "GET"])
-
 def register():
-
 	while True:
 		if request.method == "POST":
 
@@ -36,6 +33,8 @@ def register():
 				continue
 		else:
 			return render_template("register.html")
+
+
 @app.route("/login", methods = ["POST", "GET"])
 def login():
 	if request.method == "POST":

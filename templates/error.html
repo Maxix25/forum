@@ -1,9 +1,7 @@
-<!DOCTYPE html>
-<html>
-<head>
-	<title>Error</title>
-</head>
-<body>
-	<h1>Something went wrong, try again...</h1>
-</body>
-</html>
+{% extends "layout.html" %}
+
+{% set title='Error' %}
+
+{% block content %}
+  <h1>Something went wrong, try again...</h1>
+{% endblock content %}
