@@ -16,21 +16,21 @@
 	  </li>
 	  {% if session['username'] %}
 		<li>
-	  		<a class="hover:text-blue-700" href="{{ url_for('settings') }}">User Settings</a>
+			<a class="hover:text-blue-700" href="{{ url_for('settings') }}">User Settings</a>
 		</li>
 		<li class="mx-3">
 			<a class="hover:text-blue-700" href="{{ url_for('create') }}">Post Something</a>
-	  	</li>
+		</li>
 		<li class="mx-3">
 		  <a class="hover:text-blue-700" href="{{ url_for('logout') }}">Logout</a>
-	  	</li>
+		</li>
 	  {% else %}
 		<li class="mx-3">
 		  <a class="hover:text-blue-700" href="{{ url_for('login') }}">Login</a>
 		</li>
 		<li class="mx-3">
 		<a class="hover:text-blue-700" href="{{ url_for('register') }}">Register</a>
-	  	</li>
+		</li>
 	  {% endif %}      
 	</ul>
   </nav>
