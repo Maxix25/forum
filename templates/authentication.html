@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+{% set title="Authentication" %}
+{% block content %}
+	<div class="form-box shadow-md hover:shadow-xl transition-all duration-500 ease-in-out top p-6">
+		<form class="flex flex-col items-center" action="#" method="post">
+	  		<h1 class="text-2xl text-blue-600 font-bold mb-5">Authentication</h1>
+	  		<input type="text" id="login" class="my-2 rounded-md outline-none bg-gray-200 p-1 px-3" name="username" placeholder="Username">
+	  		<input type="password" id="password" class="my-2 rounded-md outline-none bg-gray-200 p-1 px-3" name="password" placeholder="Password">
+	  		<input type="submit" class="my-2 rounded outline-none mt-4 py-1 px-5 border-b-4" value="Log In">
+		</form>
+	</div>
+
+{% endblock content %}
