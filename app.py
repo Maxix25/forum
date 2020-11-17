@@ -95,7 +95,7 @@ def post():
 # indivisual pages for posts
 @app.route("/post/<int:post_id>")
 def post_item(post_id):
-	cursor.execute(f"SELECT * FROM POSTS WHERE ID = {post_id}")
+	cursor.execute(f"SELECT * FROM POSTS WHERE POSTID = {post_id}")
 	post = list(cursor.fetchone())
 	id, title, content, author, created_at = post
 	return render_template('post.html', title=title, content=content, author=author, created_at=created_at)
