@@ -37,7 +37,7 @@ def register():
 			description = request.form["description"]
 			if len(username) == 0 or len(password) == 0 or len(description) == 0:
 				flash("All fields are obligatory", alert_error)
-				return render_template("login.html")
+				return render_template("register.html")
 			if password == password_confirm:
 				try:
 					cursor.execute("INSERT INTO LOGIN VALUES (?, ?, ?, 'False')", (username, password, description))
