@@ -165,11 +165,8 @@ def user_page(username):
 def authentication():
 	global authentication
 	if request.method == "POST":
-		username = request.form["username"]
 		password = request.form["password"]
-		cursor.execute("SELECT * FROM LOGIN WHERE USERNAME=(?) AND PASSWORD=(?)", (username, password))
-		list = cursor.fetchall()
-		if len(list) > 0:
+		if "username" in session and password in session["password"]:
 			authentication = True
 			return redirect(url_for("settings"))
 		else:
