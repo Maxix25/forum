@@ -8,6 +8,7 @@ db = sqlite3.connect("login.sqlite3", check_same_thread = False)
 cursor = db.cursor()
 cursor.execute("CREATE TABLE IF NOT EXISTS LOGIN (USERNAME VARCHAR(10) UNIQUE NOT NULL, PASSWORD VARCHAR(10) NOT NULL, DESCRIPTION VARCHAR(100) NOT NULL, ROOT BOOLEAN)")
 cursor.execute("CREATE TABLE IF NOT EXISTS POSTS (POSTID INTEGER PRIMARY KEY AUTOINCREMENT, TITLE VARCHAR (20), CONTENT VARCHAR(200), AUTHOR VARCHAR(10), CREATED_AT DATETIME)")
+db.commit()
 db.set_trace_callback(print)
 
 # Global Variables
@@ -86,6 +87,12 @@ def login():
 
 @app.route("/post", methods = ["POST", "GET"])
 def post():
+	if request.method == "POST":
+		search = request.form["search"]
+		cursor.execute(f"SELECT * FROM POSTS WHERE TITLE LIKE '{search}%' OR CONTENT LIKE '{search}%'")
+		search_results = cursor.fetchall()
+		print(search_results)
+		return render_template("posts.html", search_results = search_results, counter = 0)
 	cursor.execute("SELECT * FROM POSTS")
 	posts = list(cursor.fetchall())[:5]
 	print(posts)
