@@ -9,14 +9,11 @@
 	  <input type="text" id="login" class="my-2 rounded-md outline-none bg-gray-200 p-1 px-3" name="username" placeholder="Username">
 	  <input type="password" id="password" class="my-2 rounded-md outline-none bg-gray-200 p-1 px-3" name="password" placeholder="Password">
 	  <input type="submit" class="my-2 rounded outline-none mt-4 py-1 px-5 border-b-4" value="Log In">
-	  {% if authentication == False %}
 		<div class="flex items-center my-1">
 		  <input type="checkbox" id="rememberMe" class="leading-tight" value="true" name="rememberMe">
 		  <label for="rememberMe" class="ml-2 text-gray-700 text-xs">Remember Me</label>
 		</div>
-
-	  <a href="{{ url_for('register') }}" class="text-xs mt-4 text-gray-600 hover:text-gray-900">Don't have an account? Create one now!</a>
-	  {% endif %}
+	  	<a href="{{ url_for('register') }}" class="text-xs mt-4 text-gray-600 hover:text-gray-900">Don't have an account? Create one now!</a>
 	</form>
   </div>
 {% endblock content %}
