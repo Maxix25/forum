@@ -6,8 +6,8 @@ app.secret_key = "Hello World"
 app.permanent_session_lifetime = timedelta(days=180)
 db = sqlite3.connect("login.sqlite3", check_same_thread = False)
 cursor = db.cursor()
-cursor.execute("CREATE TABLE IF NOT EXISTS LOGIN (USERNAME VARCHAR(10) UNIQUE, PASSWORD VARCHAR(10), ROOT BOOLEAN)")
-cursor.execute("CREATE TABLE IF NOT EXISTS POSTS (ID INTEGER PRIMARY KEY AUTOINCREMENT, TITLE VARCHAR (20), CONTENT VARCHAR(200), AUTHOR VARCHAR(10), CREATED_AT DATETIME)")
+cursor.execute("CREATE TABLE IF NOT EXISTS LOGIN (USERNAME VARCHAR(10) UNIQUE NOT NULL, PASSWORD VARCHAR(10) NOT NULL, DESCRIPTION VARCHAR(100) NOT NULL, ROOT BOOLEAN)")
+cursor.execute("CREATE TABLE IF NOT EXISTS POSTS (POSTID INTEGER PRIMARY KEY AUTOINCREMENT, TITLE VARCHAR (20), CONTENT VARCHAR(200), AUTHOR VARCHAR(10), CREATED_AT DATETIME)")
 db.set_trace_callback(print)
 
 # Global Variables
@@ -33,9 +33,13 @@ def register():
 				return redirect(url_for("register"))
 			password = request.form["password"]
 			password_confirm = request.form["password_confirm"]
+			description = request.form["description"]
+			if len(username) == 0 or len(password) == 0 or len(description) == 0:
+				flash("All fields are obligatory", alert_error)
+				return render_template("login.html")
 			if password == password_confirm:
 				try:
-					cursor.execute("INSERT INTO LOGIN VALUES (?, ?, 'False')", (username, password))
+					cursor.execute("INSERT INTO LOGIN VALUES (?, ?, ?, 'False')", (username, password, description))
 					db.commit()
 				except sqlite3.IntegrityError:
 					flash("Username has already been taken", alert_error)
@@ -141,6 +145,22 @@ def settings():
 		else:
 			return redirect(url_for("login"))
 
+@app.route("/<username>", methods = ["POST", "GET"])
+def user_page(username):
+	try:
+		if request.method == "POST":
+			image = request.form["image"]
+			return render_template("user_page.html")
+		else:
+			cursor.execute(f"SELECT USERNAME, DESCRIPTION FROM LOGIN WHERE USERNAME='{username}'")
+			list = cursor.fetchall()
+			username = list[0][0]
+			description = list[0][1]
+			return render_template("user_page.html", username = username, description = description)
+	except IndexError:
+		print("Hello World")
+		return render_template("404.html")
+
 @app.route("/authentication", methods = ["POST", "GET"])
 def authentication():
 	global authentication
@@ -149,7 +169,7 @@ def authentication():
 		password = request.form["password"]
 		cursor.execute("SELECT * FROM LOGIN WHERE USERNAME=(?) AND PASSWORD=(?)", (username, password))
 		list = cursor.fetchall()
-		if username in list[0] and password in list[0]:
+		if len(list) > 0:
 			authentication = True
 			return redirect(url_for("settings"))
 		else:
