@@ -37,7 +37,7 @@ def register():
 			description = request.form["description"]
 			if len(username) == 0 or len(password) == 0 or len(description) == 0:
 				flash("All fields are obligatory", alert_error)
-				return render_template("register.html")
+				return redirect(url_for("register"))
 			if password == password_confirm:
 				try:
 					cursor.execute("INSERT INTO LOGIN VALUES (?, ?, ?, 'False')", (username, password, description))
@@ -115,7 +115,7 @@ def create():
 		content = request.form["content"]
 		user = session['username']
 		time = datetime.now()
-		if title or content:
+		if title != "" and content != "":
 			cursor.execute("INSERT INTO POSTS VALUES (NULL, ?, ?, ?, ?)", (title, content, user, time))
 			db.commit()
 			flash("Your post has been submited!", success)
