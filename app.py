@@ -1,15 +1,22 @@
-import sqlite3
+import mysql.connector
 from flask import Flask, request, render_template, flash, url_for, redirect, session
 from datetime import timedelta, datetime
 app = Flask(__name__)
 app.secret_key = "Hello World"
 app.permanent_session_lifetime = timedelta(days=180)
-db = sqlite3.connect("login.sqlite3", check_same_thread = False)
+db = mysql.connector.connect(
+	host = "sql10.freemysqlhosting.net",
+	username = "sql10377809",
+	password = "KvnfkQLwki",
+	port = 3306,
+	database = "sql10377809"
+	)
 cursor = db.cursor()
 cursor.execute("CREATE TABLE IF NOT EXISTS LOGIN (USERNAME VARCHAR(10) UNIQUE NOT NULL, PASSWORD VARCHAR(10) NOT NULL, DESCRIPTION VARCHAR(100) NOT NULL, ROOT BOOLEAN)")
-cursor.execute("CREATE TABLE IF NOT EXISTS POSTS (POSTID INTEGER PRIMARY KEY AUTOINCREMENT, TITLE VARCHAR (20), CONTENT VARCHAR(200), AUTHOR VARCHAR(10), CREATED_AT DATETIME)")
+cursor.execute("CREATE TABLE IF NOT EXISTS POSTS (POSTID INTEGER PRIMARY KEY AUTO_INCREMENT, TITLE VARCHAR (20), CONTENT VARCHAR(200), AUTHOR VARCHAR(10), CREATED_AT DATETIME)")
 db.commit()
-db.set_trace_callback(print)
+cursor.execute("SELECT * FROM LOGIN")
+print(cursor.fetchall())
 
 # Global Variables
 authentication = False
@@ -40,13 +47,14 @@ def register():
 				return redirect(url_for("register"))
 			if password == password_confirm:
 				try:
-					cursor.execute("INSERT INTO LOGIN VALUES (?, ?, ?, 'False')", (username, password, description))
+					cursor.execute(f"INSERT INTO LOGIN (USERNAME, PASSWORD, DESCRIPTION, ROOT) VALUES ('{username}', '{password}', '{description}', 'False')")
 					db.commit()
-				except sqlite3.IntegrityError:
-					flash("Username has already been taken", alert_error)
-					return redirect(url_for("register"))
-				flash("Successfully registered!", success)
-				return redirect(url_for("post"))
+					print("hello world")
+					flash("Successfully registered!", success)
+					return redirect(url_for("post"))
+				except mysql.connector.IntegrityError:
+					flash("Username already taken", warning_error)
+					return render_template("register.html")
 			else:
 				flash("Passwords didn't match")
 				return redirect(url_for("register"))
@@ -65,7 +73,7 @@ def login():
 			if username == "" or password == "":
 				flash("Both fields are obligatory", warning_error)
 				return redirect(url_for("login"))
-			cursor.execute("SELECT * FROM LOGIN WHERE USERNAME=(?) AND PASSWORD=(?) LIMIT 1", (username, password))
+			cursor.execute(f"SELECT * FROM LOGIN WHERE USERNAME='{username}' AND PASSWORD='{password}' LIMIT 1")
 			list = cursor.fetchall()
 			if len(list) > 0:
 				session["username"] = username
@@ -116,7 +124,7 @@ def create():
 		user = session['username']
 		time = datetime.now()
 		if title != "" and content != "":
-			cursor.execute("INSERT INTO POSTS VALUES (NULL, ?, ?, ?, ?)", (title, content, user, time))
+			cursor.execute(f"INSERT INTO POSTS (POSTID, TITLE, CONTENT, AUTHOR, CREATED_AT) VALUES (NULL, '{title}', '{content}', '{user}', '{time}')")
 			db.commit()
 			flash("Your post has been submited!", success)
 			return redirect(url_for("create"))
@@ -136,9 +144,12 @@ def settings():
 		new_password = request.form["new_password"]
 		username = session["username"]
 		password = session["password"]
-		cursor.execute("SELECT * FROM LOGIN")
-		cursor.execute("UPDATE LOGIN SET USERNAME=(?), PASSWORD=(?) WHERE USERNAME=(?) AND PASSWORD=(?)", (new_username, new_password, username, password))
-		db.commit()
+		try:
+			cursor.execute(f"UPDATE LOGIN SET USERNAME='{new_username}', PASSWORD='{new_password}' WHERE USERNAME='{username}' AND PASSWORD='{password}'")
+			db.commit()
+		except mysql.connector.IntegrityError:
+			flash("Username already taken", warning_error)
+			return render_template("settings.html")
 		session["username"] = new_username
 		session["password"] = new_password
 		flash("Credentials changed correctly!", success)
