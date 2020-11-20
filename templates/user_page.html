@@ -1,11 +1,31 @@
 {% extends "layout.html" %}
 {% set title="User Page" %}
+{% block head %}
+<script>
+	const input = document.getElementById('upload');
+	const link = document.getElementById('link');
+	let objectURL;
+
+	input.addEventListener('change', function () {
+	  if (objectURL) {
+	    // revoke the old object url to avoid using more memory than needed
+	    URL.revokeObjectURL(objectURL);  
+	  }
+
+	  const file = this.files[0];
+	  objectURL = URL.createObjectURL(file);
+
+	  link.href = objectURL;
+	  link.click();
+	});
+</script>
+{% endblock head %}
 
 {% block content %}
 	<p>Username: {{ username }}</p>
 	<p>Description: {{ description }}</p>
 	<form action="#" method="post">
-		<input type="file" name="image">
-		<input type="submit" value="submit">
+		<input type="file" id="upload" name="image">
+		<a id="link" class="text-xs mt-3 text-gray-600 hover:text-gray-900" download style="display: none">Link to the download for the image</a>
 	</form>
 {% endblock content %}
