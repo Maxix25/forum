@@ -1,22 +1,17 @@
 import mysql.connector
 from flask import Flask, request, render_template, flash, url_for, redirect, session
 from datetime import timedelta, datetime
+from functions import init_mysql
 app = Flask(__name__)
 app.secret_key = "Hello World"
 app.permanent_session_lifetime = timedelta(days=180)
-db = mysql.connector.connect(
-	host = "sql10.freemysqlhosting.net",
-	username = "sql10377809",
-	password = "KvnfkQLwki",
-	port = 3306,
-	database = "sql10377809"
-	)
+
+db = init_mysql()
+
 cursor = db.cursor()
-cursor.execute("CREATE TABLE IF NOT EXISTS LOGIN (USERNAME VARCHAR(10) UNIQUE NOT NULL, PASSWORD VARCHAR(10) NOT NULL, DESCRIPTION VARCHAR(100) NOT NULL, ROOT BOOLEAN)")
+cursor.execute("CREATE TABLE IF NOT EXISTS LOGIN (USERNAME VARCHAR(10) UNIQUE NOT NULL, PASSWORD VARCHAR(10) NOT NULL, DESCRIPTION VARCHAR(100) NOT NULL)")
 cursor.execute("CREATE TABLE IF NOT EXISTS POSTS (POSTID INTEGER PRIMARY KEY AUTO_INCREMENT, TITLE VARCHAR (20), CONTENT VARCHAR(200), AUTHOR VARCHAR(10), CREATED_AT DATETIME)")
 db.commit()
-cursor.execute("SELECT * FROM LOGIN")
-print(cursor.fetchall())
 
 # Global Variables
 authentication = False
@@ -39,7 +34,9 @@ def register():
 			if len(username) > 10:
 				flash("The maximum length for the username is 10 characters", warning_error)
 				return redirect(url_for("register"))
+			print(username)
 			password = request.form["password"]
+			print(password)
 			password_confirm = request.form["password_confirm"]
 			description = request.form["description"]
 			if len(username) == 0 or len(password) == 0 or len(description) == 0:
@@ -47,9 +44,8 @@ def register():
 				return redirect(url_for("register"))
 			if password == password_confirm:
 				try:
-					cursor.execute(f"INSERT INTO LOGIN (USERNAME, PASSWORD, DESCRIPTION, ROOT) VALUES ('{username}', '{password}', '{description}', 'False')")
+					cursor.execute(f"INSERT INTO LOGIN (USERNAME, PASSWORD, DESCRIPTION) VALUES (%s, %s, %s)", (username, password, description))
 					db.commit()
-					print("hello world")
 					flash("Successfully registered!", success)
 					return redirect(url_for("post"))
 				except mysql.connector.IntegrityError:
@@ -73,8 +69,10 @@ def login():
 			if username == "" or password == "":
 				flash("Both fields are obligatory", warning_error)
 				return redirect(url_for("login"))
-			cursor.execute(f"SELECT * FROM LOGIN WHERE USERNAME='{username}' AND PASSWORD='{password}' LIMIT 1")
+			cursor.execute(f"SELECT USERNAME, PASSWORD FROM LOGIN WHERE USERNAME=(%s) AND PASSWORD=(%s) LIMIT 1", (username, password))
+			print(cursor.statement)
 			list = cursor.fetchall()
+			print(list)
 			if len(list) > 0:
 				session["username"] = username
 				session["password"] = password
@@ -97,7 +95,7 @@ def login():
 def post():
 	if request.method == "POST":
 		search = request.form["search"]
-		cursor.execute(f"SELECT * FROM POSTS WHERE TITLE LIKE '{search}%' OR CONTENT LIKE '{search}%'")
+		cursor.execute(f"SELECT * FROM POSTS WHERE TITLE LIKE '{search}%' OR CONTENT LIKE '{search}%' ORDER BY CREATED_AT")
 		search_results = cursor.fetchall()
 		print(search_results)
 		return render_template("posts.html", search_results = search_results, counter = 0)
