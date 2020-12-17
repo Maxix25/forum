@@ -1,6 +1,7 @@
 {% extends "layout.html" %}
 {% set title="User Page" %}
 {% block head %}
+<!--
 <script>
 	const input = document.getElementById('upload');
 	const link = document.getElementById('link');
@@ -19,13 +20,13 @@
 	  link.click();
 	});
 </script>
+-->
 {% endblock head %}
 
 {% block content %}
 	<p>Username: {{ username }}</p>
 	<p>Description: {{ description }}</p>
-	<form action="#" method="post">
-		<input type="file" id="upload" name="image">
-		<a id="link" class="text-xs mt-3 text-gray-600 hover:text-gray-900" download style="display: none">Link to the download for the image</a>
-	</form>
+	<a href="#">
+		<img src="{{ image }}">
+	</a>
 {% endblock content %}

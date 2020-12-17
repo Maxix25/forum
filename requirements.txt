@@ -1,2 +1,5 @@
 Flask==0.10.1
 gunicorn==19.3.0
+mysql-connector-python==8.0.22
+Flask-Dance==3.2.0
+Authlib==0.15.2

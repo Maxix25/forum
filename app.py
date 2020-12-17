@@ -1,15 +1,25 @@
-import mysql.connector
+import os
 from flask import Flask, request, render_template, flash, url_for, redirect, session
 from datetime import timedelta, datetime
-from functions import init_mysql
+from init import init_mysql, init_google, init_github
+from authlib.integrations.flask_client import OAuth
 app = Flask(__name__)
 app.secret_key = "Hello World"
 app.permanent_session_lifetime = timedelta(days=180)
 
 db = init_mysql()
 
+
+# OAuth apps
+oauth = OAuth(app)
+google = init_google(oauth)
+
+github_blueprint = init_github()
+app.register_blueprint(github_blueprint, url_prefix = "/github_login")
+
+
 cursor = db.cursor()
-cursor.execute("CREATE TABLE IF NOT EXISTS LOGIN (USERNAME VARCHAR(10) UNIQUE NOT NULL, PASSWORD VARCHAR(10) NOT NULL, DESCRIPTION VARCHAR(100) NOT NULL)")
+cursor.execute("CREATE TABLE IF NOT EXISTS USERS (USERNAME VARCHAR(10) UNIQUE NOT NULL, PASSWORD VARCHAR(10) NOT NULL, DESCRIPTION VARCHAR(100) NOT NULL)")
 cursor.execute("CREATE TABLE IF NOT EXISTS POSTS (POSTID INTEGER PRIMARY KEY AUTO_INCREMENT, TITLE VARCHAR (20), CONTENT VARCHAR(200), AUTHOR VARCHAR(10), CREATED_AT DATETIME)")
 db.commit()
 
@@ -44,8 +54,8 @@ def register():
 				return redirect(url_for("register"))
 			if password == password_confirm:
 				try:
-					cursor.execute(f"INSERT INTO LOGIN (USERNAME, PASSWORD, DESCRIPTION) VALUES (%s, %s, %s)", (username, password, description))
-					db.commit()
+					cursor.execute(f"INSERT INTO USERS (USERNAME, PASSWORD, DESCRIPTION) VALUES (%s, %s, %s)", (username, password, description))
+					db.comm>it()
 					flash("Successfully registered!", success)
 					return redirect(url_for("post"))
 				except mysql.connector.IntegrityError:
@@ -69,7 +79,7 @@ def login():
 			if username == "" or password == "":
 				flash("Both fields are obligatory", warning_error)
 				return redirect(url_for("login"))
-			cursor.execute(f"SELECT USERNAME, PASSWORD FROM LOGIN WHERE USERNAME=(%s) AND PASSWORD=(%s) LIMIT 1", (username, password))
+			cursor.execute(f"SELECT USERNAME, PASSWORD FROM USERS WHERE USERNAME=(%s) AND PASSWORD=(%s) LIMIT 1", (username, password))
 			print(cursor.statement)
 			list = cursor.fetchall()
 			print(list)
@@ -90,6 +100,34 @@ def login():
 	except Exception as e:
 		print(e)
 
+@app.route("/login/google")
+def login_google():
+	google = oauth.create_client('google')
+	redirect_uri = url_for('authorize', _external=True)
+	return oauth.google.authorize_redirect(redirect_uri)
+
+@app.route("/authorize")
+def authorize():
+	google = oauth.create_client('google')
+	token = oauth.google.authorize_access_token()
+	resp = google.get('userinfo')
+	user_info = resp.json()
+	print(user_info)
+	# do something with the token and profile
+	session["picture"] = user_info["picture"]
+	return redirect('/post')
+
+@app.route('/github_login')
+def github_login():
+	if not github.authorized:
+		return redirect(url_for('github.login'))
+	else:
+		account_info = github.get('/user')
+		if account_info.ok:
+			account_info_json = account_info.json()
+			return '<h1>Your Github name is {}'.format(account_info_json['login'])
+
+	return '<h1>Request failed!</h1>'
 
 @app.route("/post", methods = ["POST", "GET"])
 def post():
@@ -99,10 +137,11 @@ def post():
 		search_results = cursor.fetchall()
 		print(search_results)
 		return render_template("posts.html", search_results = search_results, counter = 0)
-	cursor.execute("SELECT * FROM POSTS")
-	posts = list(cursor.fetchall())[:5]
-	print(posts)
-	return render_template("posts.html", posts = posts)
+	else:
+		cursor.execute("SELECT * FROM POSTS")
+		posts = list(cursor.fetchall())[:5]
+		print(posts)
+		return render_template("posts.html", posts = posts)
 
 
 # indivisual pages for posts
@@ -119,10 +158,10 @@ def create():
 	if request.method == "POST":
 		title = request.form["title"]
 		content = request.form["content"]
-		user = session['username']
+		author = session['username']
 		time = datetime.now()
 		if title != "" and content != "":
-			cursor.execute(f"INSERT INTO POSTS (POSTID, TITLE, CONTENT, AUTHOR, CREATED_AT) VALUES (NULL, '{title}', '{content}', '{user}', '{time}')")
+			cursor.execute(f"INSERT INTO POSTS (POSTID, TITLE, CONTENT, AUTHOR, CREATED_AT) VALUES (NULL, %s, %s, %s, %s)", (title, content, author, time))
 			db.commit()
 			flash("Your post has been submited!", success)
 			return redirect(url_for("create"))
@@ -141,9 +180,8 @@ def settings():
 		new_username = request.form["new_username"]
 		new_password = request.form["new_password"]
 		username = session["username"]
-		password = session["password"]
 		try:
-			cursor.execute(f"UPDATE LOGIN SET USERNAME='{new_username}', PASSWORD='{new_password}' WHERE USERNAME='{username}' AND PASSWORD='{password}'")
+			cursor.execute(f"UPDATE USERS SET USERNAME=%s, PASSWORD=%s WHERE USERNAME=%s", (new_username, new_password, username))
 			db.commit()
 		except mysql.connector.IntegrityError:
 			flash("Username already taken", warning_error)
@@ -163,16 +201,17 @@ def settings():
 
 @app.route("/<username>", methods = ["POST", "GET"])
 def user_page(username):
+	image = session["picture"]
+	print(image)
 	try:
 		if request.method == "POST":
-			image = request.form["image"]
 			return render_template("user_page.html")
 		else:
-			cursor.execute(f"SELECT USERNAME, DESCRIPTION FROM LOGIN WHERE USERNAME='{username}'")
+			cursor.execute(f"SELECT USERNAME, DESCRIPTION FROM USERS WHERE USERNAME='{username}'")
 			list = cursor.fetchall()
 			username = list[0][0]
 			description = list[0][1]
-			return render_template("user_page.html", username = username, description = description)
+			return render_template("user_page.html", username = username, description = description, image = image)
 	except IndexError:
 		print("Hello World")
 		return render_template("404.html")
