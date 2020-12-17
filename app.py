@@ -1,10 +1,11 @@
 import os
 from flask import Flask, request, render_template, flash, url_for, redirect, session
 from datetime import timedelta, datetime
+from generate_password import generate_password
 from init import init_mysql, init_google, init_github
 from authlib.integrations.flask_client import OAuth
 app = Flask(__name__)
-app.secret_key = "Hello World"
+app.secret_key = generate_password()
 app.permanent_session_lifetime = timedelta(days=180)
 
 db = init_mysql()
@@ -115,6 +116,8 @@ def authorize():
 	print(user_info)
 	# do something with the token and profile
 	session["picture"] = user_info["picture"]
+	session["username"] = user_info["name"]
+	session["password"] = True
 	return redirect('/post')
 
 @app.route('/github_login')
@@ -221,7 +224,7 @@ def authentication():
 	global authentication
 	if request.method == "POST":
 		password = request.form["password"]
-		if "username" in session and password in session["password"]:
+		if "username" in session and "password" in session["password"]:
 			authentication = True
 			return redirect(url_for("settings"))
 		else:
